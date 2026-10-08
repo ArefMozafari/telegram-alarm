@@ -44,21 +44,25 @@ SAY = "/usr/bin/say"
 SCUTIL = "/usr/sbin/scutil"
 FALLBACK_SOUND = "/System/Library/Sounds/Sosumi.aiff"
 
-# Just the rotating file — launchd already redirects this process's stdout
-# and stderr to launchd.log, so a StreamHandler here would only duplicate
-# every line into both files.
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[
-        logging.handlers.RotatingFileHandler(
-            BASE / "notifier.log", maxBytes=5_000_000, backupCount=3),
-    ],
-)
 log = logging.getLogger("telegram-alarm")
-# The supervisor logs every state change itself; telethon's own chatter
-# (catch-up warnings for every channel, connect/disconnect info) is noise.
-logging.getLogger("telethon").setLevel(logging.ERROR)
+
+
+def configure_logging():
+    # Just the rotating file — launchd already redirects this process's stdout
+    # and stderr to launchd.log, so a StreamHandler here would only duplicate
+    # every line into both files. Called from main() rather than at import, so
+    # importing this module (as the tests do) never creates notifier.log.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=[
+            logging.handlers.RotatingFileHandler(
+                BASE / "notifier.log", maxBytes=5_000_000, backupCount=3),
+        ],
+    )
+    # The supervisor logs every state change itself; telethon's own chatter
+    # (catch-up warnings for every channel, connect/disconnect info) is noise.
+    logging.getLogger("telethon").setLevel(logging.ERROR)
 
 
 def load_config():
@@ -421,6 +425,7 @@ async def run(cfg, login_only=False):
 
 
 def main():
+    configure_logging()
     restored = restore_stray_volume()
     if "--restore-volume" in sys.argv:
         if restored is not None:
