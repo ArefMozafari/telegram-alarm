@@ -372,11 +372,12 @@ class IslandDriver(NSObject):
 
 
 def parse_project(body):
-    """Pull the header fields out of a Kaya project message.
+    """Pull the header fields out of a message.
 
-    Expected shape: first non-empty line is the title, then a
-    "fixed:/hourly: <amount>" budget line and a "<flag emoji> Country-City"
-    location line. Missing fields come back as None.
+    The first non-empty line is the title. Job-board bots (such as
+    @KayaProjectsBot) follow it with a "fixed:/hourly: <amount>" budget line
+    and a "<flag emoji> Country-City" location line; any message without
+    those lines simply gets None for them.
     """
     title = budget = location = None
     for raw in body.splitlines():
@@ -548,8 +549,8 @@ def island_main(app):
 
     # The top notch_h strip of the pill sits alongside the physical notch:
     # its center is hidden behind the notch but its left/right wings are
-    # visible, so they carry the small meta text ("New Kaya Project" left,
-    # budget + location right) while the project title sits centered in the
+    # visible, so they carry the small meta text (the headline left, any
+    # budget + location right) while the message title sits centered in the
     # lower, always-visible band directly under the notch.
     band_h = exp_h - notch_h
     strip_y = band_h

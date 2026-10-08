@@ -1,7 +1,8 @@
 {
   "api_id": 0,
   "api_hash": "PASTE_API_HASH_HERE",
-  "bot_username": "KayaProjectsBot",
+  "chats": ["PASTE_CHAT_USERNAME"],
+  "headline": "{chat}",
   "flash_enabled": true,
   "flash_style": "island",
   "bar_height": 150,
@@ -11,7 +12,7 @@
   "sound_repeats": 1,
   "min_volume": 60,
   "speak_enabled": false,
-  "speak_text": "New Project",
+  "speak_text": "New Telegram message",
   "banner_enabled": true,
   "burst_cooldown_seconds": 15,
   "proxy": "system",

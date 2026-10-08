@@ -33,26 +33,17 @@ fi
 if [ ! -f config.json ]; then
   cp config.example.json config.json && chmod 600 config.json
 fi
-check_config() { "$PYBIN" - <<'EOF'
-import json, sys
-try:
-    c = json.load(open("config.json"))
-except Exception:
-    sys.exit(1)
-h = str(c.get("api_hash", ""))
-ok = isinstance(c.get("api_id"), int) and c["api_id"] > 0 and len(h) >= 10 and "PASTE" not in h.upper()
-sys.exit(0 if ok else 1)
-EOF
-}
-until check_config; do
-  echo "[!!] config.json still needs your Telegram api_id + api_hash."
+until "$PYBIN" notifier.py --check-config; do
+  echo "[!!] config.json still needs your Telegram api_id, api_hash and the chats to watch."
   echo "     1. Log in at https://my.telegram.org -> 'API development tools'"
   echo "     2. Copy api_id and api_hash into config.json (opening it for you now)."
+  echo "     3. Replace PASTE_CHAT_USERNAME under \"chats\" with the bots, people,"
+  echo "        groups or channels to watch."
   open -t config.json 2>/dev/null || true
   echo
   read -r -p "Press Enter once you've saved config.json (Ctrl+C to quit)... "
 done
-echo "[OK] Credentials configured."
+echo "[OK] Credentials and chats configured."
 
 # 3. One-time Telegram login
 if [ ! -f telegram_alarm.session ]; then
@@ -116,7 +107,7 @@ case "${yn:-n}" in
 esac
 
 # 7. Live log
-step "Live log — every new Kaya project alert appears here"
+step "Live log — every new message alert appears here"
 echo "Closing this window does NOT stop the notifier; it keeps running in the background."
 echo "Press Ctrl+C (or just close the window) to stop watching."
 echo

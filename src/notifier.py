@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Fullscreen-flash + alarm-sound alerts for new Telegram messages from a bot.
+"""Fullscreen-flash + alarm-sound alerts for new Telegram messages from chosen chats.
 
 Usage:
-  notifier.py --test          Preview a project alert (no Telegram needed)
+  notifier.py --test          Preview a new-message alert (no Telegram needed)
   notifier.py --test-warning  Preview a connection-problem alert
   notifier.py --proxy-check   Show which proxy would be used right now
+  notifier.py --check-config  Exit 0 if config.json is filled in, 1 if not
   notifier.py --login         One-time interactive Telegram login, then exit
   notifier.py --restore-volume  Fix a volume left raised by an interrupted alert, then exit
   notifier.py                 Run the listener (this is what the launchd agent runs)
@@ -44,6 +45,14 @@ SAY = "/usr/bin/say"
 SCUTIL = "/usr/sbin/scutil"
 FALLBACK_SOUND = "/System/Library/Sounds/Sosumi.aiff"
 
+# The example config's stand-in for the chats to watch; a config that still
+# holds it has not been filled in yet.
+EXAMPLE_CHAT = "PASTE_CHAT_USERNAME"
+# Marks where the sending chat's name goes in the configured headline.
+CHAT_FIELD = "{chat}"
+# Shown when the configured headline would otherwise come out empty.
+GENERIC_HEADLINE = "New message"
+
 log = logging.getLogger("telegram-alarm")
 
 
@@ -73,15 +82,41 @@ def load_config():
         raise
 
 
+def watched_chats(cfg):
+    """Returns the chats to watch: usernames without the leading @, or numeric IDs.
+
+    Reads the `chats` list, falling back to the single `bot_username` setting
+    that configs written before multi-chat support still carry.
+    """
+    chats = cfg.get("chats")
+    if chats is None:
+        bot_username = cfg.get("bot_username")
+        chats = [bot_username] if bot_username else []
+    return [chat.strip().lstrip("@") if isinstance(chat, str) else chat for chat in chats]
+
+
 def config_ready(cfg):
     api_id, api_hash = cfg.get("api_id"), cfg.get("api_hash", "")
+    chats = watched_chats(cfg)
     return (
         isinstance(api_id, int)
         and api_id > 0
         and isinstance(api_hash, str)
         and len(api_hash) >= 10
         and "PASTE" not in api_hash.upper()
+        and bool(chats)
+        and EXAMPLE_CHAT not in chats
     )
+
+
+def alert_headline(cfg, chat_name):
+    """Returns the new-message headline with the sending chat's name filled in.
+
+    Falls back to a generic headline when that leaves nothing to show, e.g. a
+    chat without a name.
+    """
+    headline = str(cfg.get("headline", CHAT_FIELD)).replace(CHAT_FIELD, chat_name).strip()
+    return headline or GENERIC_HEADLINE
 
 
 def osascript(expr):
@@ -175,13 +210,15 @@ def display_is_asleep():
 _last_project_alert = 0.0
 
 
-def alert(cfg, text, kind="project"):
+def alert(cfg, text, kind="project", chat_name=""):
     global _last_project_alert
     project = kind == "project"
-    headline = "New Kaya Project" if project else "Connection problem!"
+    headline = alert_headline(cfg, chat_name) if project else "Connection problem!"
     banner_title = headline if project else "Telegram Alarm: connection problem"
     first_line = next((l for l in (text or "").splitlines() if l.strip()), "(no text)")
-    (log.info if project else log.warning)("ALERT[%s]: %s", kind, first_line[:200])
+    (log.info if project else log.warning)("ALERT[%s]%s: %s", kind,
+                                           f" {chat_name}" if chat_name else "",
+                                           first_line[:200])
     show_banner(cfg, text or "", banner_title)
     if project:
         if cfg.get("mute_while_asleep", True) and display_is_asleep():
@@ -211,7 +248,7 @@ def alert(cfg, text, kind="project"):
             log.exception("flash failed")
     if project:
         sound_name = cfg.get("sound_file", "alarm.wav")
-        phrase = cfg.get("speak_text", "New Kaya project")
+        phrase = cfg.get("speak_text", "New Telegram message")
     else:
         sound_name = cfg.get("warning_sound_file", "warning.wav")
         phrase = "Telegram alarm connection problem"
@@ -286,7 +323,7 @@ def proxy_desc(proxy):
 # --------------------------------------------------------------------------
 
 async def run(cfg, login_only=False):
-    from telethon import TelegramClient, events
+    from telethon import TelegramClient, events, utils
     from telethon.tl import functions
 
     interval = max(5, int(cfg.get("health_check_seconds", 15)))
@@ -321,7 +358,7 @@ async def run(cfg, login_only=False):
             state["was_down"] = True
             state["last_warn"] = now
             warn_alert(cfg, "Can't reach Telegram — no connection for ~%ds.\n"
-                            "New projects will NOT alert until it's back." % int(stale))
+                            "New messages will NOT alert until it's back." % int(stale))
 
     watchdog_task = None
     if not login_only:
@@ -351,49 +388,57 @@ async def run(cfg, login_only=False):
                     else:
                         log.error("Telegram session missing or expired. Run: %s %s --login",
                                   sys.executable, BASE / "notifier.py")
-                        warn_alert(cfg, "Telegram session expired — project alerts are DOWN.\n"
+                        warn_alert(cfg, "Telegram session expired — message alerts are DOWN.\n"
                                         "Run the login again (see README).")
                         sys.exit(1)
                 me = await client.get_me()
-                username = str(cfg.get("bot_username", "KayaProjectsBot")).lstrip("@")
-                try:
-                    bot = await client.get_entity(username)
-                except Exception as exc:
-                    log.error("Couldn't find @%s (%s). Check bot_username in config.json.",
-                              username, exc)
-                    if login_only:
-                        sys.exit(1)
-                    raise
-                return me, username, bot
+                entities = []
+                # Keyed by the same marked peer ID that event.chat_id carries,
+                # so an incoming message can name the chat it came from.
+                names = {}
+                for chat in watched_chats(cfg):
+                    try:
+                        entity = await client.get_entity(chat)
+                    except Exception as exc:
+                        log.error("Couldn't find %s (%s). Check chats in config.json.",
+                                  chat, exc)
+                        if login_only:
+                            sys.exit(1)
+                        raise
+                    entities.append(entity)
+                    names[utils.get_peer_id(entity)] = utils.get_display_name(entity) or str(chat)
+                return me, entities, names
 
             # Watchdog timeout on the whole setup phase: connect + catch-up +
             # entity lookup can hang indefinitely on a dead proxy.
             # Interactive logins are exempt (they wait on keyboard input).
             if sys.stdin.isatty():
-                me, username, bot = await setup()
+                me, entities, names = await setup()
             else:
-                me, username, bot = await asyncio.wait_for(setup(), timeout=120)
+                me, entities, names = await asyncio.wait_for(setup(), timeout=120)
+            watching = ", ".join(names.values())
 
             if login_only:
-                log.info("Logged in as %s via %s; @%s found. Session saved — now run install.sh",
-                         me.first_name, proxy_desc(proxy), username)
+                log.info("Logged in as %s via %s; found %s. Session saved — now run install.sh",
+                         me.first_name, proxy_desc(proxy), watching)
                 await client.disconnect()
                 return
 
-            @client.on(events.NewMessage(chats=bot, incoming=True))
+            @client.on(events.NewMessage(chats=entities, incoming=True))
             async def on_message(event):
                 state["last_ok"] = time.monotonic()
-                alert(cfg, event.raw_text or "", kind="project")
+                alert(cfg, event.raw_text or "", kind="project",
+                      chat_name=names.get(event.chat_id, ""))
 
             state["last_ok"] = time.monotonic()
             if state["was_down"]:
-                log.info("Connection restored — project alerts active again")
-                show_banner(cfg, "Connection restored — project alerts are active again.",
+                log.info("Connection restored — message alerts active again")
+                show_banner(cfg, "Connection restored — message alerts are active again.",
                             "Telegram Alarm reconnected")
                 state["was_down"] = False
             attempt = 0
-            log.info("Logged in as %s — listening for @%s (%s)",
-                     me.first_name, username, proxy_desc(proxy))
+            log.info("Logged in as %s — listening for %s (%s)",
+                     me.first_name, watching, proxy_desc(proxy))
 
             fails = 0
             while True:
@@ -433,25 +478,33 @@ def main():
         else:
             print("Nothing to restore — volume wasn't left boosted.")
         return
+    if "--check-config" in sys.argv:
+        # Quiet on purpose: Telegram Alarm.command only reads the exit status.
+        try:
+            sys.exit(0 if config_ready(json.loads(CONFIG_PATH.read_text())) else 1)
+        except (OSError, ValueError):
+            sys.exit(1)
     cfg = load_config()
     if "--test" in sys.argv:
-        print("Firing a test project alert (flash + sound)...")
-        alert(cfg, "TEST — this is what a new project alert looks like.\n"
-                   "New project: Build a landing page — budget $500", kind="project")
+        print("Firing a test message alert (flash + sound)...")
+        alert(cfg, "TEST — this is what a new message alert looks like.\n"
+                   "The first line of the message becomes the title.",
+              kind="project", chat_name="Test chat")
         return
     if "--test-warning" in sys.argv:
         print("Firing a test connection-problem alert...")
         alert(cfg, "TEST — this is how a connection problem looks.\n"
-                   "Can't reach Telegram — new projects will NOT alert until it's back.",
+                   "Can't reach Telegram — new messages will NOT alert until it's back.",
               kind="warning")
         return
     if "--proxy-check" in sys.argv:
         print("Proxy that would be used right now:", proxy_desc(resolve_proxy(cfg)))
         return
     if not config_ready(cfg):
-        print("config.json still has placeholder credentials.")
-        print("Get api_id + api_hash at https://my.telegram.org (API development tools),")
-        print(f"put them in {CONFIG_PATH}, then run:  {sys.executable} {BASE / 'notifier.py'} --login")
+        print("config.json still has placeholder values.")
+        print("Get api_id + api_hash at https://my.telegram.org (API development tools)")
+        print("and list the chats to watch under \"chats\".")
+        print(f"Put them in {CONFIG_PATH}, then run:  {sys.executable} {BASE / 'notifier.py'} --login")
         sys.exit(1)
     asyncio.run(run(cfg, login_only="--login" in sys.argv))
 

@@ -6,7 +6,8 @@ glass tint with a specular sheen and rim, and a breathing glow that cycles
 red → amber → magenta → azure. The island stays on screen until you click it; a newer
 alert replaces a still-visible one. Alternatives: a flashing top bar or a fullscreen
 takeover. All styles sit above every window, Space, and fullscreen app, and an alarm
-plays whenever **@KayaProjectsBot** messages you.
+plays whenever one of the chats you list — a bot, a person, a group or a channel —
+sends a message.
 It logs in as your own Telegram account via Telethon, so it works even when Telegram
 Desktop is closed, and it ignores Focus / Do Not Disturb.
 
@@ -42,7 +43,8 @@ Run these from inside `src/` (`cd src`).
 1. **API credentials** — copy `config.example.json` to `config.json` (the
    `.command` script does this for you). Log in at https://my.telegram.org →
    *API development tools* → create an app (any name/short name). Copy **api_id**
-   and **api_hash** into `config.json`.
+   and **api_hash** into `config.json`, and list the chats to watch under
+   **chats**.
 
 2. **Log in to Telegram** (asks for your phone number + the code Telegram sends you,
    then saves a session file so it never asks again):
@@ -55,7 +57,7 @@ Run these from inside `src/` (`cd src`).
 
 Preview the alerts anytime, no Telegram needed:
 
-    venv/bin/python notifier.py --test           # project alert (red)
+    venv/bin/python notifier.py --test           # new-message alert (red)
     venv/bin/python notifier.py --test-warning   # connection-problem alert (amber)
     venv/bin/python notifier.py --proxy-check    # show which proxy would be used
 
@@ -63,7 +65,7 @@ Preview the alerts anytime, no Telegram needed:
 
 The listener pings Telegram every `health_check_seconds`. If the connection stays
 broken past `connection_alert_after_seconds`, you get a **different** alert — amber
-island / bar, descending warning sound, "project alerts are PAUSED" — repeated every
+island / bar, descending warning sound, "new messages will NOT alert" — repeated every
 `connection_realert_minutes` until it's back, plus a banner when it reconnects. An
 expired Telegram session triggers the same warning.
 
@@ -76,7 +78,8 @@ the health check notices the dead path and the next attempt uses the new setting
 | key | meaning |
 |---|---|
 | `api_id`, `api_hash` | your credentials from my.telegram.org |
-| `bot_username` | the bot to watch (default `KayaProjectsBot`) |
+| `chats` | the chats to watch, as usernames (`"@SomeBot"`) or `t.me` links. Bots, people, groups and channels all work. An older single `bot_username` setting is still read when `chats` is missing |
+| `headline` | the alert's headline; `{chat}` becomes the sending chat's name (default `"{chat}"`) |
 | `flash_enabled`, `flash_seconds` | flash overlay on/off; the seconds apply to bar/fullscreen only — the island stays until clicked |
 | `flash_style` | `"island"` = Liquid Glass Dynamic-Island pill from the notch (default; on the notched screen, or top-center of the main one); `"bar"` = flashing strip across the top of every display; `"fullscreen"` = whole-screen takeover. Island and bar never steal keyboard focus |
 | `bar_height` | height of the bar style, in pixels |
@@ -85,7 +88,7 @@ the health check notices the dead path and the next attempt uses the new setting
 | `speak_enabled`, `speak_text` | also speak a phrase out loud with `say` |
 | `banner_enabled` | also post a normal macOS notification (lands in Notification Center history) |
 | `burst_cooldown_seconds` | if several messages arrive within this window (e.g. after wake/reconnect), only the first gets flash + sound |
-| `mute_while_asleep` | default `true`: while the display is off (including a Power Nap background wake with the lid closed), project alerts get banner + log only — no flash, no alarm. Not replayed later; check the log or Notification Center if you want to know what came in |
+| `mute_while_asleep` | default `true`: while the display is off (including a Power Nap background wake with the lid closed), message alerts get banner + log only — no flash, no alarm. Not replayed later; check the log or Notification Center if you want to know what came in |
 | `proxy` | `"system"` (default) = use the macOS system proxy (SOCKS wins over HTTPS/HTTP; PAC files unsupported); `"none"` = always direct; or explicit `"socks5://host:port"` / `"http://host:port"`. Re-read on every reconnect, so proxy changes are picked up live |
 | `health_check_seconds` | how often to ping Telegram to prove the connection is alive |
 | `connection_alert_after_seconds` | how long the connection must stay broken before the amber warning alert fires (short blips stay silent) |
