@@ -28,7 +28,11 @@ else
   echo "[OK] Python environment present."
 fi
 
-# 2. Credentials
+# 2. Credentials. A fresh clone has no config.json yet, so start one from the
+#    example; it holds secrets once filled in, hence owner-only permissions.
+if [ ! -f config.json ]; then
+  cp config.example.json config.json && chmod 600 config.json
+fi
 check_config() { "$PYBIN" - <<'EOF'
 import json, sys
 try:

@@ -39,9 +39,10 @@ To stop everything — e.g. before closing the lid to sleep — double-click
 
 Run these from inside `src/` (`cd src`).
 
-1. **API credentials** — log in at https://my.telegram.org → *API development tools* →
-   create an app (any name/short name). Copy **api_id** and **api_hash** into
-   `config.json`.
+1. **API credentials** — copy `config.example.json` to `config.json` (the
+   `.command` script does this for you). Log in at https://my.telegram.org →
+   *API development tools* → create an app (any name/short name). Copy **api_id**
+   and **api_hash** into `config.json`.
 
 2. **Log in to Telegram** (asks for your phone number + the code Telegram sends you,
    then saves a session file so it never asks again):

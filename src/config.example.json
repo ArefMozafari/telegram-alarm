@@ -1,0 +1,22 @@
+{
+  "api_id": 0,
+  "api_hash": "PASTE_API_HASH_HERE",
+  "bot_username": "KayaProjectsBot",
+  "flash_enabled": true,
+  "flash_style": "island",
+  "bar_height": 150,
+  "flash_seconds": 12,
+  "sound_enabled": true,
+  "sound_file": "alarm.wav",
+  "sound_repeats": 1,
+  "min_volume": 60,
+  "speak_enabled": false,
+  "speak_text": "New Project",
+  "banner_enabled": true,
+  "burst_cooldown_seconds": 15,
+  "proxy": "system",
+  "health_check_seconds": 7,
+  "connection_alert_after_seconds": 15,
+  "connection_realert_minutes": 1,
+  "warning_sound_file": "warning.wav"
+}
