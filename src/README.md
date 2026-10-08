@@ -1,4 +1,4 @@
-# Kaya Telegram Notifier
+# Telegram Alarm
 
 Shows an unmissable alert — by default a Dynamic-Island-style Liquid Glass pill that
 springs out of the MacBook notch: real backdrop blur of whatever is behind it, dark
@@ -15,8 +15,8 @@ Desktop is closed, and it ignores Focus / Do Not Disturb.
 The project folder has two double-clickable `.command` files and everything
 else lives in `src/`:
 
-- **Kaya Notifier.command** — sets up and (re)starts everything.
-- **Stop Kaya Notifier.command** — stops the background agent and kills any
+- **Telegram Alarm.command** — sets up and (re)starts everything.
+- **Stop Telegram Alarm.command** — stops the background agent and kills any
   alert that's on screen or mid-sound right now. Handy right before sleep /
   closing the lid, so a message that lands at that instant can't still flash
   or play a sound.
@@ -26,14 +26,14 @@ Finder alias to each instead of moving them.
 
 ## Easiest way to run everything
 
-Double-click **Kaya Notifier.command** in Finder. It does the whole lifecycle:
+Double-click **Telegram Alarm.command** in Finder. It does the whole lifecycle:
 creates the Python environment if missing, walks you through credentials and the
 one-time Telegram login if needed, (re)starts the background agent, health-checks
 it, optionally fires a test alert, and then streams the live log. Safe to run any
 time — it only sets up what's missing.
 
 To stop everything — e.g. before closing the lid to sleep — double-click
-**Stop Kaya Notifier.command**.
+**Stop Telegram Alarm.command**.
 
 ## Setup (one time, manual alternative)
 
@@ -93,13 +93,13 @@ the health check notices the dead path and the next attempt uses the new setting
 | `warning_sound_file` | sound for connection-problem alerts (descending tones by default) |
 
 After changing the config, run `./install.sh --force` to restart the agent and pick up
-the change (a plain `./install.sh` — including the one `Kaya Notifier.command` runs —
+the change (a plain `./install.sh` — including the one `Telegram Alarm.command` runs —
 skips reinstalling when the agent is already up and healthy, to avoid needless restarts).
 
 ## Notes / troubleshooting
 
 - Logs: `notifier.log` (main), `launchd.log` (agent stdout/stderr — a symlink into
-  `~/Library/Logs/kaya-notifier/`; it has to live outside this Desktop folder because
+  `~/Library/Logs/telegram-alarm/`; it has to live outside this Desktop folder because
   the macOS Sandbox silently blocks launchd from redirecting into TCC-protected
   folders like Desktop/Documents/Downloads), `flash.err.log` (overlay errors).
 - A fully sleeping Mac can't alert — but macOS Power Nap lets it briefly wake in the
@@ -111,7 +111,7 @@ skips reinstalling when the agent is already up and healthy, to avoid needless r
 - Don't run `notifier.py` (listener mode) manually while the agent is installed — two
   copies fight over the session file. Stop the agent first (see below).
   `--test` is always safe.
-- Stop everything: double-click **Stop Kaya Notifier.command** (or run
+- Stop everything: double-click **Stop Telegram Alarm.command** (or run
   `./uninstall.sh` from inside `src/`).
-- `config.json` and `kaya_session.session` are secrets (full account access) — keep
+- `config.json` and `telegram_alarm.session` are secrets (full account access) — keep
   them private.

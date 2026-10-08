@@ -35,7 +35,7 @@ except ImportError:
 
 BASE = Path(__file__).resolve().parent
 CONFIG_PATH = BASE / "config.json"
-SESSION_PATH = BASE / "kaya_session"
+SESSION_PATH = BASE / "telegram_alarm"
 VOLUME_RESTORE_PATH = BASE / "volume_restore.json"
 
 AFPLAY = "/usr/bin/afplay"
@@ -55,7 +55,7 @@ logging.basicConfig(
             BASE / "notifier.log", maxBytes=5_000_000, backupCount=3),
     ],
 )
-log = logging.getLogger("kaya-notifier")
+log = logging.getLogger("telegram-alarm")
 # The supervisor logs every state change itself; telethon's own chatter
 # (catch-up warnings for every channel, connect/disconnect info) is noise.
 logging.getLogger("telethon").setLevel(logging.ERROR)
@@ -102,7 +102,7 @@ def restore_volume(volume, muted):
 
 def restore_stray_volume():
     """Finish a volume restore an earlier run didn't get to — e.g. it was
-    killed (Stop Kaya Notifier.command, a crash, a forced restart) while an
+    killed (Stop Telegram Alarm.command, a crash, a forced restart) while an
     alert had temporarily raised the volume for min_volume. Safe to call on
     every startup: a no-op when nothing was left boosted."""
     try:
@@ -175,7 +175,7 @@ def alert(cfg, text, kind="project"):
     global _last_project_alert
     project = kind == "project"
     headline = "New Kaya Project" if project else "Connection problem!"
-    banner_title = headline if project else "Kaya notifier: connection problem"
+    banner_title = headline if project else "Telegram Alarm: connection problem"
     first_line = next((l for l in (text or "").splitlines() if l.strip()), "(no text)")
     (log.info if project else log.warning)("ALERT[%s]: %s", kind, first_line[:200])
     show_banner(cfg, text or "", banner_title)
@@ -210,7 +210,7 @@ def alert(cfg, text, kind="project"):
         phrase = cfg.get("speak_text", "New Kaya project")
     else:
         sound_name = cfg.get("warning_sound_file", "warning.wav")
-        phrase = "Kaya notifier connection problem"
+        phrase = "Telegram alarm connection problem"
     threading.Thread(target=sound_worker, args=(cfg, sound_name, phrase)).start()
 
 
@@ -385,7 +385,7 @@ async def run(cfg, login_only=False):
             if state["was_down"]:
                 log.info("Connection restored — project alerts active again")
                 show_banner(cfg, "Connection restored — project alerts are active again.",
-                            "Kaya notifier reconnected")
+                            "Telegram Alarm reconnected")
                 state["was_down"] = False
             attempt = 0
             log.info("Logged in as %s — listening for @%s (%s)",

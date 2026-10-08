@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>com.kaya.notifier2</string>
+  <key>Label</key><string>io.github.arefmozafari.telegram-alarm</string>
   <key>ProgramArguments</key>
   <array>
     <string>__DIR__/venv/bin/python</string>

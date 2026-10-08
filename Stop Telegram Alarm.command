@@ -1,19 +1,19 @@
 #!/bin/bash
-# Kaya Notifier — full stop. Kills the background agent (and removes it from
+# Telegram Alarm — full stop. Kills the background agent (and removes it from
 # login items) plus any alert that's on screen or mid-sound right now.
 # Handy right before putting the Mac to sleep / closing the lid, so a
 # message that arrives at that instant can't still flash or play a sound.
 # Project files, config, and your Telegram login are kept — double-click
-# "Kaya Notifier.command" any time to start it back up.
+# "Telegram Alarm.command" any time to start it back up.
 set -u
 cd "$(dirname "$0")/src" || exit 1
 DIR="$(pwd)"
-printf '\e]0;Stop Kaya Notifier\a'
+printf '\e]0;Stop Telegram Alarm\a'
 
 hr()   { echo "----------------------------------------------------------------"; }
 step() { echo; hr; echo "== $1"; hr; }
 
-step "Stopping Kaya Notifier"
+step "Stopping Telegram Alarm"
 
 # 1. Stop the launchd agent and remove it from login items.
 ./uninstall.sh
@@ -34,6 +34,6 @@ pkill -x say 2>/dev/null && echo "[OK] Stopped a spoken alert."
 [ -x "./venv/bin/python" ] && ./venv/bin/python notifier.py --restore-volume
 
 echo
-echo "[OK] Kaya Notifier is fully stopped — safe to sleep or close the lid now."
-echo "     Double-click \"Kaya Notifier.command\" to start it again."
+echo "[OK] Telegram Alarm is fully stopped — safe to sleep or close the lid now."
+echo "     Double-click \"Telegram Alarm.command\" to start it again."
 read -r -p "Press Enter to close... "

@@ -12,8 +12,9 @@ Styles:
 
 Usage: flash.py [headline] [body] [seconds] [style] [bar_height]
 [seconds] auto-closes bar/fullscreen; the island only closes on click.
-Set KAYA_SNAPSHOT=/path.png to write a self-capture of the overlay window
-mid-animation and exit (debug aid); KAYA_SNAPSHOT_T sets the capture moment.
+Set TELEGRAM_ALARM_SNAPSHOT=/path.png to write a self-capture of the overlay
+window mid-animation and exit (debug aid); TELEGRAM_ALARM_SNAPSHOT_T sets the
+capture moment.
 """
 import os
 import re
@@ -597,7 +598,7 @@ def island_main(app):
     driver.collapsing = False
     driver.win = win
     driver.haloWin = haloWin
-    driver.snapshotPath = os.environ.get("KAYA_SNAPSHOT")
+    driver.snapshotPath = os.environ.get("TELEGRAM_ALARM_SNAPSHOT")
     DRIVER = driver
 
     win.orderFrontRegardless()  # never steals keyboard focus
@@ -612,7 +613,7 @@ def island_main(app):
         0.3, driver, "fadeInTimer:", None, False)
     # No auto-collapse: the island stays until it's clicked.
     if driver.snapshotPath:
-        snap_t = float(os.environ.get("KAYA_SNAPSHOT_T", "2.8"))
+        snap_t = float(os.environ.get("TELEGRAM_ALARM_SNAPSHOT_T", "2.8"))
         NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
             snap_t, driver, "snapshotTimer:", None, False)
     return win

@@ -1,19 +1,19 @@
 #!/bin/bash
-# Kaya Notifier — one-click setup, health check, and live log viewer.
+# Telegram Alarm — one-click setup, health check, and live log viewer.
 # Double-click this file in Finder: it opens a Terminal window, sets up anything
 # that's missing (Python env, credentials, Telegram login, background agent),
 # verifies the notifier is listening, and then shows the live log.
 set -u
 cd "$(dirname "$0")/src" || exit 1
 PYBIN="venv/bin/python"
-LABEL="com.kaya.notifier2"
-printf '\e]0;Kaya Notifier\a'
+LABEL="io.github.arefmozafari.telegram-alarm"
+printf '\e]0;Telegram Alarm\a'
 
 hr()   { echo "----------------------------------------------------------------"; }
 step() { echo; hr; echo "== $1"; hr; }
 die()  { echo "[!!] $1"; echo; read -r -p "Press Enter to close... "; exit 1; }
 
-step "Kaya Telegram Notifier — setup & status"
+step "Telegram Alarm — setup & status"
 
 # 1. Python environment (created on first run, or if the folder was moved to a new Mac)
 if [ ! -x "$PYBIN" ]; then
@@ -55,10 +55,10 @@ done
 echo "[OK] Credentials configured."
 
 # 3. One-time Telegram login
-if [ ! -f kaya_session.session ]; then
+if [ ! -f telegram_alarm.session ]; then
   step "One-time Telegram login"
   "$PYBIN" notifier.py --login || die "Login didn't complete — double-click this script to try again."
-  chmod 600 kaya_session.session 2>/dev/null
+  chmod 600 telegram_alarm.session 2>/dev/null
 fi
 echo "[OK] Logged in to Telegram (session saved)."
 
@@ -120,7 +120,7 @@ step "Live log — every new Kaya project alert appears here"
 echo "Closing this window does NOT stop the notifier; it keeps running in the background."
 echo "Press Ctrl+C (or just close the window) to stop watching."
 echo
-if [ "${KAYA_NO_TAIL:-}" = "1" ]; then
+if [ "${TELEGRAM_ALARM_NO_TAIL:-}" = "1" ]; then
   tail -n 15 notifier.log
 else
   tail -n 15 -f notifier.log

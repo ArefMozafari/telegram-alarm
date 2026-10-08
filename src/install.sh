@@ -3,7 +3,7 @@
 # restarts automatically if it crashes.
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
-LABEL="com.kaya.notifier2"
+LABEL="io.github.arefmozafari.telegram-alarm"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 # launchd's stdout/stderr redirect has to live outside ~/Desktop (and Documents/
 # Downloads): those folders are TCC-protected, and xpcproxy — the stub launchd
@@ -11,9 +11,9 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 # "deny(1) file-read-data" from the macOS Sandbox on the redirect target and the
 # job never starts (posix_spawn error 0x1). Exec'ing the venv python / script
 # itself from inside Desktop is fine; only this log redirect is affected.
-LOGDIR="$HOME/Library/Logs/kaya-notifier"
+LOGDIR="$HOME/Library/Logs/telegram-alarm"
 
-if [ ! -f "$DIR/kaya_session.session" ]; then
+if [ ! -f "$DIR/telegram_alarm.session" ]; then
   echo "Not logged in to Telegram yet. Run this first and complete the login:"
   echo "  $DIR/venv/bin/python $DIR/notifier.py --login"
   exit 1
@@ -41,7 +41,7 @@ if [ -e "$DIR/launchd.log" ] && [ ! -L "$DIR/launchd.log" ]; then
 fi
 ln -sf "$LOGDIR/launchd.log" "$DIR/launchd.log"
 
-NEW_PLIST_CONTENT="$(sed "s|__DIR__|$DIR|g; s|__LOGDIR__|$LOGDIR|g" "$DIR/com.kaya.notifier.plist.template")"
+NEW_PLIST_CONTENT="$(sed "s|__DIR__|$DIR|g; s|__LOGDIR__|$LOGDIR|g" "$DIR/launchd.plist.template")"
 
 # If it's already installed for this folder and actually running, leave it
 # alone — no need to bootout+bootstrap a job that's already healthy. Pass
