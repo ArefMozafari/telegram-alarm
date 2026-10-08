@@ -1,5 +1,10 @@
 # Telegram Alarm
 
+An alert you can't miss on your Mac whenever chosen Telegram chats message you: job
+boards, on-call bots, a family group, anything you can't afford to see an hour late.
+
+<img src="docs/island.png" alt="The island alert showing a new job post from a bot" width="820">
+
 Shows an unmissable alert — by default a Dynamic-Island-style Liquid Glass pill that
 springs out of the MacBook notch: real backdrop blur of whatever is behind it, dark
 glass tint with a specular sheen and rim, and a breathing glow that cycles
@@ -10,6 +15,18 @@ plays whenever one of the chats you list — a bot, a person, a group or a chann
 sends a message.
 It logs in as your own Telegram account via Telethon, so it works even when Telegram
 Desktop is closed, and it ignores Focus / Do Not Disturb.
+
+## Requirements
+
+- macOS
+- Python 3 (tested with 3.14 from Homebrew)
+- A Telegram account, plus an API ID and hash from https://my.telegram.org
+
+## Install
+
+    git clone https://github.com/ArefMozafari/telegram-alarm.git
+
+Then double-click **Telegram Alarm.command** in the cloned folder (see below).
 
 ## Layout
 
@@ -40,18 +57,23 @@ To stop everything — e.g. before closing the lid to sleep — double-click
 
 Run these from inside `src/` (`cd src`).
 
-1. **API credentials** — copy `config.example.json` to `config.json` (the
+1. **Python environment**:
+
+       python3 -m venv venv
+       venv/bin/python -m pip install -r requirements.txt
+
+2. **API credentials** — copy `config.example.json` to `config.json` (the
    `.command` script does this for you). Log in at https://my.telegram.org →
    *API development tools* → create an app (any name/short name). Copy **api_id**
    and **api_hash** into `config.json`, and list the chats to watch under
    **chats**.
 
-2. **Log in to Telegram** (asks for your phone number + the code Telegram sends you,
+3. **Log in to Telegram** (asks for your phone number + the code Telegram sends you,
    then saves a session file so it never asks again):
 
        venv/bin/python notifier.py --login
 
-3. **Install the background agent** (starts at login, auto-restarts on crashes):
+4. **Install the background agent** (starts at login, auto-restarts on crashes):
 
        ./install.sh
 
@@ -60,6 +82,18 @@ Preview the alerts anytime, no Telegram needed:
     venv/bin/python notifier.py --test           # new-message alert (red)
     venv/bin/python notifier.py --test-warning   # connection-problem alert (amber)
     venv/bin/python notifier.py --proxy-check    # show which proxy would be used
+
+## Example: freelance job alerts
+
+The screenshot above is a job-board bot. For the @KayaProjectsBot freelance feed,
+set these two keys in `config.json`:
+
+    "chats": ["@KayaProjectsBot"],
+    "headline": "New Kaya project",
+
+Job-board messages that carry a `fixed:` or `hourly:` budget line and a flag-emoji
+location line get those two shown on the right of the island; any other message
+shows its first line as the title.
 
 ## Connection health & proxy
 
@@ -83,7 +117,7 @@ the health check notices the dead path and the next attempt uses the new setting
 | `flash_enabled`, `flash_seconds` | flash overlay on/off; the seconds apply to bar/fullscreen only — the island stays until clicked |
 | `flash_style` | `"island"` = Liquid Glass Dynamic-Island pill from the notch (default; on the notched screen, or top-center of the main one); `"bar"` = flashing strip across the top of every display; `"fullscreen"` = whole-screen takeover. Island and bar never steal keyboard focus |
 | `bar_height` | height of the bar style, in pixels |
-| `sound_enabled`, `sound_file`, `sound_repeats` | alarm sound (any file afplay can play; path relative to this folder) and repeat count |
+| `sound_enabled`, `sound_file`, `sound_repeats` | alarm sound (any file afplay can play; path relative to `src/`) and repeat count |
 | `min_volume` | if output is muted or quieter than this (0–100), temporarily raise it for the alarm, then restore; `0` disables |
 | `speak_enabled`, `speak_text` | also speak a phrase out loud with `say` |
 | `banner_enabled` | also post a normal macOS notification (lands in Notification Center history) |
@@ -101,10 +135,11 @@ skips reinstalling when the agent is already up and healthy, to avoid needless r
 
 ## Notes / troubleshooting
 
-- Logs: `notifier.log` (main), `launchd.log` (agent stdout/stderr — a symlink into
-  `~/Library/Logs/telegram-alarm/`; it has to live outside this Desktop folder because
-  the macOS Sandbox silently blocks launchd from redirecting into TCC-protected
-  folders like Desktop/Documents/Downloads), `flash.err.log` (overlay errors).
+- Logs, all in `src/`: `notifier.log` (main), `launchd.log` (agent stdout/stderr — a
+  symlink into `~/Library/Logs/telegram-alarm/`; the real file lives outside the
+  project because the macOS Sandbox silently blocks launchd from redirecting into
+  TCC-protected folders like Desktop/Documents/Downloads, where a clone often sits),
+  `flash.err.log` (overlay errors).
 - A fully sleeping Mac can't alert — but macOS Power Nap lets it briefly wake in the
   background (lid still closed, display still off) to receive messages, which used to
   mean a full flash + alarm through a closed lid. `mute_while_asleep` (default on) now
@@ -117,4 +152,16 @@ skips reinstalling when the agent is already up and healthy, to avoid needless r
 - Stop everything: double-click **Stop Telegram Alarm.command** (or run
   `./uninstall.sh` from inside `src/`).
 - `config.json` and `telegram_alarm.session` are secrets (full account access) — keep
-  them private.
+  them private. `.gitignore` keeps both out of the repository.
+
+## Development
+
+The tests cover the config helpers in `src/notifier.py`. Run them from the repository
+root:
+
+    src/venv/bin/python -m pip install pytest
+    src/venv/bin/python -m pytest
+
+## License
+
+MIT — see [LICENSE](LICENSE).
