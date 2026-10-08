@@ -1,0 +1,16 @@
+# Secrets: the Telegram API credentials and the logged-in account session.
+src/config.json
+*.session
+*.session-journal
+
+# Runtime state the notifier and the overlay write next to themselves.
+src/island.pid
+src/volume_restore.json
+*.log
+
+# Local Python environment and caches.
+venv/
+__pycache__/
+.pytest_cache/
+
+.DS_Store
