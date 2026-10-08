@@ -1,0 +1,6 @@
+# Pinned to the versions the notifier last ran with.
+telethon==1.44.0
+# Telethon needs this to connect through a SOCKS or HTTP proxy.
+python-socks[asyncio]==2.8.2
+pyobjc-framework-Cocoa==12.2.1
+pyobjc-framework-Quartz==12.2.1

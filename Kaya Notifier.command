@@ -21,7 +21,7 @@ if [ ! -x "$PYBIN" ]; then
   SYSPY="/opt/homebrew/bin/python3"
   [ -x "$SYSPY" ] || SYSPY="/usr/local/bin/python3"
   [ -x "$SYSPY" ] || SYSPY="/usr/bin/python3"
-  "$SYSPY" -m venv venv && "$PYBIN" -m pip install --quiet telethon pyobjc-framework-Cocoa pyobjc-framework-Quartz \
+  "$SYSPY" -m venv venv && "$PYBIN" -m pip install --quiet -r requirements.txt \
     || die "Could not set up the Python environment."
   echo "[OK] Python environment ready."
 else
