@@ -1,5 +1,19 @@
-# Telegram Alarm
+<p align="center">
+  <img src="assets/icons/telegram.svg" width="36" alt="Telegram">
+  &nbsp;&nbsp;&nbsp;➜&nbsp;&nbsp;&nbsp;
+  <picture><source media="(prefers-color-scheme: dark)" srcset="assets/icons/apple-white.svg"><img src="assets/icons/apple.svg" width="36" alt="macOS"></picture>
+</p>
 
+<h1 align="center">Telegram Alarm</h1>
+
+<p align="center"><b>Unmissable macOS alerts when chosen Telegram chats message you</b></p>
+
+<p align="center">
+  <a href="https://github.com/ArefMozafari/telegram-alarm/releases/latest"><img src="https://img.shields.io/github/v/release/ArefMozafari/telegram-alarm?color=orange" alt="Release"></a>
+  <img src="https://img.shields.io/badge/platform-macOS-000000?logo=apple&logoColor=white" alt="platform macOS">
+  <img src="https://img.shields.io/badge/python-3.x-3776AB?logo=python&logoColor=white" alt="python 3">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 An alert you can't miss on your Mac whenever chosen Telegram chats message you: job
 boards, on-call bots, a family group, anything you can't afford to see an hour late.
 
